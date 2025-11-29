@@ -84,6 +84,67 @@
   @keyframes fadeIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
   @keyframes popupIn{from{opacity:0;transform:translateY(4px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
   @media(max-width:768px){.header{flex-direction:column;align-items:flex-start}.toolbar{width:100%;justify-content:space-between}}
+  /* --- Mobile Layout Optimization --- */
+@media (max-width: 600px) {
+
+  body {
+    padding: 10px;
+  }
+
+  .shell {
+    width: 100%;
+    padding: 0;
+  }
+
+  .card {
+    border-radius: 14px;
+    box-shadow: none;
+  }
+
+  .table-wrap {
+    padding: 6px;
+  }
+
+  table {
+    min-width: 100% !important;
+    font-size: 14px;
+  }
+
+  th, td {
+    padding: 6px !important;
+  }
+
+  .tabs .tab {
+    font-size: 11px;
+    padding: 4px 10px;
+  }
+
+  .toolbar {
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: center;
+  }
+
+  .btn {
+    padding: 6px 10px;
+    font-size: 11px;
+  }
+
+  /* Prevent Chrome auto-zoom */
+  input, select, td[contenteditable="true"] {
+    font-size: 16px !important;
+  }
+
+  .time-popup {
+    transform: scale(0.92);
+    min-width: 180px;
+  }
+}
+
+/* Keep popup within mobile screen */
+.time-popup {
+  max-width: 95vw;
+}
 </style>
 </head>
 <body>
@@ -707,3 +768,4 @@ window.saveForCurrentDay = ()=>saveForDay(currentDay,captureTableToData());
 </script>
 </body>
 </html>
+
