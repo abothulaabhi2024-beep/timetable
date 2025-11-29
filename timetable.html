@@ -1,0 +1,709 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Weekly Timetable — Glass Edition (Gap Selector Icon)</title>
+<style>
+  :root{
+    --glass-bg: rgba(15,23,42,0.28);
+    --glass-border: rgba(148,163,184,0.6);
+    --accent: #38bdf8;
+    --accent-soft: rgba(56,189,248,0.25);
+    --danger: #fb7185;
+    --text-main: #e5e7eb;
+    --text-muted: #9ca3af;
+    --tab-active-start: #4F8BFF;
+    --tab-active-end: #6CA8FF;
+    --tab-inactive: rgba(255,255,255,0.04);
+    --tab-hover: rgba(76,154,255,0.12);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    min-height:100vh;padding:24px;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+    background: radial-gradient(circle at 0% 0%, #0ea5e9 0, #020617 40%),
+                radial-gradient(circle at 100% 100%, #6366f1 0, #020617 40%);
+    color:var(--text-main);display:flex;align-items:center;justify-content:center;
+  }
+  .shell{width:100%;max-width:1200px}
+  .card{
+    background: linear-gradient(145deg, rgba(15,23,42,0.76), rgba(15,23,42,0.92));
+    border-radius:20px; box-shadow: 0 24px 60px rgba(15,23,42,0.7);
+    border:1px solid rgba(148,163,184,0.35); backdrop-filter: blur(22px) saturate(140%);
+    overflow:hidden;
+  }
+  .header{padding:18px 20px 10px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .title-block{display:flex;flex-direction:column;gap:2px}
+  h1{font-size:18px;font-weight:600;letter-spacing:0.02em;display:flex;align-items:center;gap:8px}
+  h1 span.badge{font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background: rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.45);color:#bbf7d0}
+  .subtitle{font-size:12px;color:var(--text-muted)}
+  .toolbar{display:inline-flex;align-items:center;gap:8px;padding:8px 10px;border-radius:999px;background: radial-gradient(circle at 0 0, rgba(56,189,248,0.18), transparent 50%), rgba(15,23,42,0.78);border:1px solid rgba(148,163,184,0.6)}
+  .toolbar-group{display:inline-flex;align-items:center;gap:6px}
+  .toolbar-label{font-size:11px;text-transform:uppercase;letter-spacing:0.12em;color:var(--text-muted);margin-right:2px}
+  .btn{border:1px solid rgba(148,163,184,0.6);background: radial-gradient(circle at 0 0, rgba(148,163,184,0.25), transparent 55%), rgba(15,23,42,0.9);color:var(--text-main);font-size:12px;font-weight:600;padding:7px 10px;border-radius:999px;display:inline-flex;align-items:center;gap:6px;cursor:pointer}
+  .btn span.icon{font-size:13px}
+  .btn:hover{border-color:var(--accent);box-shadow:0 0 0 1px rgba(56,189,248,0.35);transform:translateY(-0.5px)}
+  .btn-danger{border-color: rgba(248,113,113,0.7);color:#fecaca}
+  .dropdown{position:relative}
+  .dropdown-menu{position:absolute;top:110%;left:0;min-width:150px;padding:6px;border-radius:14px;background:rgba(15,23,42,0.98);border:1px solid rgba(148,163,184,0.7);box-shadow:0 20px 50px rgba(15,23,42,0.9);backdrop-filter:blur(18px);display:none;z-index:20}
+  .dropdown-menu.open{display:block;animation:fadeIn .14s ease-out}
+  .dropdown-item{padding:7px 9px;border-radius:8px;font-size:12px;cursor:pointer;color:var(--text-main);display:flex;justify-content:space-between;align-items:center}
+  .dropdown-item:hover{background: rgba(15,23,42,0.95);box-shadow:0 0 0 1px var(--accent-soft)}
+  .divider{height:1px;margin:4px 0;background: rgba(31,41,55,0.9)}
+  .body-section{padding:4px 18px 18px}
+  .table-wrap{margin-top:4px;border-radius:16px;padding:10px;background: radial-gradient(circle at 0 0, rgba(56,189,248,0.22), transparent 55%), rgba(15,23,42,0.9);border:1px solid rgba(148,163,184,0.6);overflow-x:auto}
+  table{width:100%;min-width:640px;border-collapse:collapse}
+  th{font-size:11px;text-transform:uppercase;letter-spacing:0.12em;color:var(--text-muted);padding:9px 10px;text-align:left;border-bottom:1px solid rgba(51,65,85,0.9);position:sticky;top:0;background: radial-gradient(circle at 0 0, rgba(15,23,42,0.85), transparent 50%), rgba(15,23,42,0.96);z-index:1}
+  td{font-size:13px;padding:8px 10px;border-bottom:1px solid rgba(30,41,59,0.85);color:var(--text-main);position:relative;transition:background .15s,box-shadow .15s}
+  tbody tr:nth-child(2n) td{background: rgba(15,23,42,0.65)}
+  tbody tr:hover td{background: rgba(15,23,42,0.92);box-shadow:0 0 0 1px var(--accent-soft)}
+  td[contenteditable="true"]{cursor:text;border-radius:8px}
+  td[contenteditable="true"]:focus{outline:1px solid var(--accent);outline-offset:-2px;box-shadow:0 0 0 1px rgba(56,189,248,0.7)}
+  td[contenteditable="true"]:empty::before{content:attr(data-placeholder);color:var(--text-muted);font-style:italic}
+  .slot-col{text-align:center;width:70px;font-weight:700;color:#e5e7eb;background: rgba(15,23,42,0.9)}
+  .time-col{width:150px;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,monospace;cursor:pointer;background: radial-gradient(circle at 0 0, rgba(56,189,248,0.16),transparent 55%), rgba(15,23,42,0.9)}
+  .activity-col{min-width:200px}
+  .custom-col{min-width:140px}
+  .time-popup{position:absolute;z-index:40;min-width:200px;padding:8px 9px;border-radius:14px;background:rgba(15,23,42,0.98);border:1px solid rgba(148,163,184,0.7);box-shadow:0 20px 40px rgba(15,23,42,0.9);backdrop-filter:blur(18px);display:none;animation:popupIn .12s ease-out}
+  .time-popup-title{font-size:11px;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px}
+  .time-row{display:flex;align-items:center;gap:6px}
+  .select{border-radius:10px;border:1px solid rgba(148,163,184,0.7);padding:6px 8px;background:rgba(15,23,42,0.9);color:var(--text-main);font-size:12px;cursor:pointer}
+  .select:focus{outline:1px solid var(--accent)}
+  .time-btn{border-radius:999px;border:1px solid rgba(148,163,184,0.7);padding:5px 8px;font-size:11px;cursor:pointer;background: rgba(15,23,42,0.95);color:var(--text-main)}
+  .time-btn.primary{background:var(--accent);border-color:rgba(56,189,248,0.9);color:#0f172a;font-weight:600}
+  .tabs{display:flex;gap:8px;align-items:center;margin-left:12px}
+  .tab{padding:6px 10px;border-radius:999px;font-size:13px;font-weight:600;cursor:pointer;color:var(--text-main);background:var(--tab-inactive);border:1px solid rgba(255,255,255,0.04);transition:all .14s}
+  .tab:hover{background:var(--tab-hover)}
+  .tab.active{background:linear-gradient(135deg,var(--tab-active-start),var(--tab-active-end));box-shadow:0 6px 20px rgba(79,139,255,0.18);color:white;transform:translateY(-2px)}
+  .gap-chip{display:inline-flex;align-items:center;gap:8px;padding:7px 10px;border-radius:999px;border:1px solid rgba(148,163,184,0.6);background: rgba(10,25,45,0.6);cursor:pointer}
+  .gap-chip .clock{font-size:14px}
+  .gap-panel{display:flex;flex-direction:column;gap:8px;padding:8px;border-radius:10px;background:rgba(10,15,25,0.98);border:1px solid rgba(148,163,184,0.6)}
+  .gap-row{display:flex;gap:8px;align-items:center}
+  .gap-num{width:62px;padding:6px;border-radius:8px;border:1px solid rgba(148,163,184,0.6);background:rgba(15,23,42,0.9);color:var(--text-main);text-align:center}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes popupIn{from{opacity:0;transform:translateY(4px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
+  @media(max-width:768px){.header{flex-direction:column;align-items:flex-start}.toolbar{width:100%;justify-content:space-between}}
+</style>
+</head>
+<body>
+<div class="shell">
+  <div class="card">
+    <div class="header">
+      <div style="display:flex;gap:12px;align-items:center">
+        <div class="title-block">
+          <h1>Weekly Timetable Builder <span class="badge">Glass</span></h1>
+          <div class="subtitle">Click start/end to edit time • Auto-save per day</div>
+        </div>
+
+        <div class="tabs" id="tabsContainer" aria-label="Week tabs"></div>
+      </div>
+
+      <div class="toolbar" id="toolbar">
+        <div class="toolbar-group">
+          <div class="toolbar-label">Rows</div>
+
+          <div class="dropdown">
+            <button class="btn" data-menu-button="add-rows"><span class="icon">➕</span> Add</button>
+            <div class="dropdown-menu" data-menu-panel="add-rows">
+              <div class="dropdown-item" data-action="add-rows" data-count="1">Add 1 <span class="kbd">×1</span></div>
+              <div class="dropdown-item" data-action="add-rows" data-count="2">Add 2 <span class="kbd">×2</span></div>
+              <div class="dropdown-item" data-action="add-rows" data-count="4">Add 4 <span class="kbd">×4</span></div>
+              <div class="divider"></div>
+              <div class="dropdown-item" data-action="add-rows-custom">Custom…</div>
+            </div>
+          </div>
+
+          <div class="dropdown">
+            <button class="btn" data-menu-button="delete-rows"><span class="icon">➖</span> Delete</button>
+            <div class="dropdown-menu" data-menu-panel="delete-rows">
+              <div class="dropdown-item" data-action="delete-rows" data-count="1">Delete 1</div>
+              <div class="dropdown-item" data-action="delete-rows" data-count="2">Delete 2</div>
+              <div class="dropdown-item" data-action="delete-rows" data-count="4">Delete 4</div>
+              <div class="divider"></div>
+              <div class="dropdown-item" data-action="delete-rows-custom">Custom…</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="toolbar-group">
+          <div class="toolbar-label">Columns</div>
+
+          <div class="dropdown">
+            <button class="btn" data-menu-button="add-cols"><span class="icon">📐</span> Add</button>
+            <div class="dropdown-menu" data-menu-panel="add-cols">
+              <div class="dropdown-item" data-action="add-cols" data-count="1">Add 1</div>
+              <div class="dropdown-item" data-action="add-cols" data-count="2">Add 2</div>
+              <div class="dropdown-item" data-action="add-cols" data-count="3">Add 3</div>
+              <div class="divider"></div>
+              <div class="dropdown-item" data-action="add-cols-custom">Custom…</div>
+            </div>
+          </div>
+
+          <div class="dropdown">
+            <button class="btn" data-menu-button="delete-cols"><span class="icon">✂️</span> Delete</button>
+            <div class="dropdown-menu" data-menu-panel="delete-cols">
+              <div class="dropdown-item" data-action="delete-cols" data-count="1">Delete 1</div>
+              <div class="dropdown-item" data-action="delete-cols" data-count="2">Delete 2</div>
+              <div class="divider"></div>
+              <div class="dropdown-item" data-action="delete-cols-custom">Custom…</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- GAP chip (Design 2: Icon + value) -->
+        <div class="dropdown" style="margin-left:8px">
+          <button class="gap-chip" id="gapBtn" data-menu-button="gap-panel" aria-haspopup="true" aria-expanded="false">
+            <span class="clock">🕒</span>
+            <span id="gapLabel">Gap: 5 min</span>
+          </button>
+          <div class="dropdown-menu" data-menu-panel="gap-panel" id="gapPanel">
+            <div class="gap-panel" style="min-width:170px">
+              <div style="font-size:12px;color:var(--text-muted);">Break between periods (minutes)</div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <button class="btn" data-gap="1">1</button>
+                <button class="btn" data-gap="5">5</button>
+                <button class="btn" data-gap="10">10</button>
+                <button class="btn" data-gap="15">15</button>
+                <button class="btn" data-gap="30">30</button>
+              </div>
+              <div style="display:flex;gap:8px;margin-top:8px;align-items:center">
+                <input id="gapCustomInput" class="gap-num" type="number" min="0" step="1" value="5" aria-label="Custom gap minutes">
+                <button class="btn" id="gapApplyBtn">Apply</button>
+              </div>
+              <div style="font-size:11px;color:var(--text-muted);margin-top:6px">Change affects only rows added afterwards.</div>
+            </div>
+          </div>
+        </div>
+
+        <button class="btn btn-danger" id="clearAllBtn"><span class="icon">🧹</span> Clear All</button>
+      </div>
+    </div>
+
+    <div class="body-section">
+      <div class="table-wrap">
+        <table id="scheduleTable">
+          <thead>
+            <tr id="headerRow">
+              <th contenteditable="true" data-col-index="0" data-placeholder="Slot">Slot</th>
+              <th contenteditable="true" data-col-index="1" data-placeholder="Start Time">Start Time</th>
+              <th contenteditable="true" data-col-index="2" data-placeholder="End Time">End Time</th>
+              <th contenteditable="true" data-col-index="3" data-placeholder="Activity">Activity</th>
+            </tr>
+          </thead>
+          <tbody id="scheduleBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Time Picker Popup -->
+<div id="timePopup" class="time-popup" aria-hidden="true">
+  <div class="time-popup-title">Set time</div>
+  <div class="time-row">
+    <select id="hourSelect" class="select" aria-label="Hour"></select>
+    <span>:</span>
+    <select id="minuteSelect" class="select" aria-label="Minute"></select>
+    <select id="periodSelect" class="select" aria-label="AM/PM">
+      <option value="AM">AM</option>
+      <option value="PM">PM</option>
+    </select>
+    <button class="time-btn" id="cancelTimeBtn">Cancel</button>
+    <button class="time-btn primary" id="applyTimeBtn">Set</button>
+  </div>
+</div>
+
+<script>
+/* =========================
+   Config & helpers
+   ========================= */
+const DAYS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+const BASE_KEY = "weekly_schedule_glass_v2";
+let currentDay = null;
+
+/* Column metadata */
+const REQUIRED_COLS = [
+  { index:0, name:"Slot", className:"slot-col", placeholder:"N" },
+  { index:1, name:"Start Time", className:"time-col", placeholder:"6:00 AM" },
+  { index:2, name:"End Time", className:"time-col", placeholder:"6:45 AM" },
+  { index:3, name:"Activity", className:"activity-col", placeholder:"Enter activity..." }
+];
+function getColMeta(idx){
+  const base = REQUIRED_COLS.find(c=>c.index===idx);
+  if (base) return base;
+  return { index:idx, name:`Column ${idx+1}`, className:"custom-col", placeholder:"Enter..." };
+}
+
+/* Time parse/format helpers */
+function parseTimeToMinutes(str){
+  if (!str) return null;
+  const m = String(str).trim().match(/^(\d{1,2}):(\d{2})\s*(AM|PM)?$/i);
+  if (!m) return null;
+  let hour = parseInt(m[1],10);
+  let minute = parseInt(m[2],10);
+  let period = (m[3] || "AM").toUpperCase();
+  if (hour<1||hour>12) hour = ((hour%12)+12)%12 || 12;
+  if (minute<0||minute>59) minute = 0;
+  if (period==="PM" && hour!==12) hour += 12;
+  if (period==="AM" && hour===12) hour = 0;
+  return hour*60 + minute;
+}
+function minutesToTimeString(total){
+  total = ((total % (24*60)) + (24*60)) % (24*60);
+  let hour24 = Math.floor(total/60);
+  let minute = total % 60;
+  const period = hour24 >= 12 ? "PM":"AM";
+  let hour12 = hour24 % 12;
+  if (hour12 === 0) hour12 = 12;
+  return `${hour12}:${String(minute).padStart(2,"0")} ${period}`;
+}
+function addMinutes(str,delta){
+  const t = parseTimeToMinutes(str);
+  if (t==null) return null;
+  return minutesToTimeString(t + delta);
+}
+function timeDiffMinutes(startStr,endStr){
+  const s = parseTimeToMinutes(startStr);
+  const e = parseTimeToMinutes(endStr);
+  if (s==null || e==null) return null;
+  let diff = e - s;
+  if (diff <= 0) diff += 24*60;
+  return diff;
+}
+
+/* =========================
+   Storage: per-day data
+   Data shape per day: { headers:[], rows:[[]], gapMinutes:number }
+   ========================= */
+function storageKeyForDay(day){ return `${BASE_KEY}_${day}`; }
+
+function saveForDay(day, data){
+  localStorage.setItem(storageKeyForDay(day), JSON.stringify(data));
+}
+
+function loadFromDay(day){
+  const raw = localStorage.getItem(storageKeyForDay(day));
+  try { return raw ? JSON.parse(raw) : null; } catch(e) { return null; }
+}
+
+/* Capture current DOM table to data object with gap */
+function captureTableToData(){
+  const headerRow = document.getElementById("headerRow");
+  const tbody = document.getElementById("scheduleBody");
+  const headers = Array.from(headerRow.children).map(th => th.textContent || "");
+  const rows = Array.from(tbody.children).map(tr => Array.from(tr.children).map(td => td.textContent || ""));
+  // read current gap for this day
+  const gap = readGapForDay(currentDay);
+  return { headers, rows, gapMinutes: gap };
+}
+
+/* Save current table to storage for current day */
+function saveTable(){
+  if (!currentDay) return;
+  const data = captureTableToData();
+  saveForDay(currentDay, data);
+}
+
+/* Load or create default data for a day */
+function loadForDay(day){
+  const raw = loadFromDay(day);
+  let data = raw;
+  if (!data || !Array.isArray(data.headers) || data.headers.length < 4) {
+    data = {
+      headers: ["Slot","Start Time","End Time","Activity"],
+      rows: [
+        ["1","6:00 AM","6:45 AM","Morning Routine"],
+        ["2","6:50 AM","7:35 AM","Breakfast"],
+        ["3","7:40 AM","8:25 AM","Study Block"]
+      ],
+      gapMinutes: 5
+    };
+  } else {
+    if (typeof data.gapMinutes !== "number") data.gapMinutes = data.gapMinutes ? Number(data.gapMinutes) : 5;
+  }
+  // apply gap to UI
+  setGapForDay(day, data.gapMinutes, false);
+  rebuildTable(data);
+}
+
+/* =========================
+   Rebuild & UI helpers
+   ========================= */
+function rebuildTable(data){
+  const headerRow = document.getElementById("headerRow");
+  const tbody = document.getElementById("scheduleBody");
+  headerRow.innerHTML = "";
+  tbody.innerHTML = "";
+
+  while (data.headers.length < 4) data.headers.push(getColMeta(data.headers.length).name);
+
+  data.headers.forEach((text, idx) => {
+    const th = document.createElement("th");
+    th.contentEditable = "true";
+    th.dataset.colIndex = idx;
+    const meta = getColMeta(idx);
+    th.dataset.placeholder = meta.name;
+    th.textContent = text || meta.name;
+    headerRow.appendChild(th);
+  });
+
+  const colCount = data.headers.length;
+  data.rows.forEach((rowArr, rowIndex) => {
+    const tr = document.createElement("tr");
+    for (let c=0;c<colCount;c++){
+      const meta = getColMeta(c);
+      const td = document.createElement("td");
+      td.contentEditable = "true";
+      td.dataset.colIndex = c;
+      td.className = meta.className;
+      td.dataset.placeholder = c===0 ? String(rowIndex+1) : meta.placeholder;
+      td.textContent = rowArr[c] || "";
+      if (c===1 || c===2) td.addEventListener('click', onTimeCellClick);
+      tr.appendChild(td);
+    }
+    tbody.appendChild(tr);
+  });
+
+  if (tbody.children.length === 0) addRow();
+  reindexSlots();
+  // Save so stored data is normalized
+  saveTable();
+}
+
+function reindexSlots(){
+  const tbody = document.getElementById("scheduleBody");
+  Array.from(tbody.children).forEach((tr, idx) => {
+    const slotCell = tr.children[0];
+    const meta = getColMeta(0);
+    if (slotCell) {
+      slotCell.className = meta.className;
+      slotCell.dataset.placeholder = String(idx+1);
+      const existing = slotCell.textContent.trim();
+      if (!existing || !isNaN(existing)) {
+        slotCell.textContent = String(idx+1);
+      }
+    }
+  });
+}
+
+/* =========================
+   Row/Column ops — use per-day gap
+   ========================= */
+function readGapForDay(day){
+  const raw = loadFromDay(day);
+  if (raw && typeof raw.gapMinutes === "number") return raw.gapMinutes;
+  // fallback to an explicit UI value or 5
+  const fromUI = Number(localStorage.getItem(`${BASE_KEY}_active_gap`));
+  return (Number.isFinite(fromUI) && fromUI >= 0) ? fromUI : 5;
+}
+
+function setGapForDay(day, minutes, persistUI = true){
+  minutes = Math.max(0, Math.round(Number(minutes) || 0));
+  // store per-day
+  const data = loadFromDay(day) || { headers:["Slot","Start Time","End Time","Activity"], rows:[], gapMinutes:minutes };
+  data.gapMinutes = minutes;
+  saveForDay(day, data);
+  // update UI label + global UI store (so gap button remembers across days)
+  document.getElementById("gapLabel").textContent = `Gap: ${minutes} min`;
+  if (persistUI) localStorage.setItem(`${BASE_KEY}_active_gap`, String(minutes));
+}
+
+function addRow(auto=true){
+  const tbody = document.getElementById("scheduleBody");
+  const headerRow = document.getElementById("headerRow");
+  const colCount = headerRow.children.length;
+  const rowCount = tbody.children.length;
+
+  let autoStart = "6:00 AM";
+  let autoEnd = "6:05 AM";
+
+  const gap = readGapForDay(currentDay);
+
+  if (auto && rowCount > 0) {
+    const prev = tbody.children[rowCount-1];
+    const prevStart = prev.children[1]?.textContent.trim();
+    const prevEnd = prev.children[2]?.textContent.trim();
+    const prevEndPlusGap = addMinutes(prevEnd || prevStart, gap) || "6:05 AM";
+    autoStart = prevEndPlusGap;
+    const dur = timeDiffMinutes(prevStart, prevEnd);
+    const duration = (dur && dur > 0 && dur <= 8*60) ? dur : 45;
+    autoEnd = addMinutes(autoStart, duration) || addMinutes(autoStart,45);
+  }
+
+  const tr = document.createElement("tr");
+  for (let c=0;c<colCount;c++){
+    const meta = getColMeta(c);
+    const td = document.createElement("td");
+    td.contentEditable = "true";
+    td.dataset.colIndex = c;
+    td.className = meta.className;
+    td.dataset.placeholder = c===0 ? String(rowCount+1) : meta.placeholder;
+    if (c===0) td.textContent = String(rowCount+1);
+    else if (c===1) { td.textContent = autoStart; td.addEventListener('click', onTimeCellClick); }
+    else if (c===2) { td.textContent = autoEnd; td.addEventListener('click', onTimeCellClick); }
+    else td.textContent = "";
+    tr.appendChild(td);
+  }
+  tbody.appendChild(tr);
+  reindexSlots();
+  saveTable();
+}
+
+function deleteRow(){
+  const tbody = document.getElementById("scheduleBody");
+  if (tbody.children.length <= 1) { alert("At least one row must remain."); return; }
+  tbody.removeChild(tbody.lastElementChild);
+  reindexSlots();
+  saveTable();
+}
+
+function addColumn(){
+  const headerRow = document.getElementById("headerRow");
+  const tbody = document.getElementById("scheduleBody");
+  const newIndex = headerRow.children.length;
+  const meta = getColMeta(newIndex);
+  const th = document.createElement("th");
+  th.contentEditable = "true";
+  th.dataset.colIndex = newIndex;
+  th.dataset.placeholder = meta.name;
+  th.textContent = meta.name;
+  headerRow.appendChild(th);
+  Array.from(tbody.children).forEach(tr=>{
+    const td = document.createElement("td");
+    td.contentEditable = "true";
+    td.dataset.colIndex = newIndex;
+    td.className = meta.className;
+    td.dataset.placeholder = meta.placeholder;
+    td.textContent = "";
+    if (newIndex===1||newIndex===2) td.addEventListener('click', onTimeCellClick);
+    tr.appendChild(td);
+  });
+  saveTable();
+}
+
+function deleteColumn(){
+  const headerRow = document.getElementById("headerRow");
+  const tbody = document.getElementById("scheduleBody");
+  const colCount = headerRow.children.length;
+  if (colCount <= 4) { alert("Cannot delete base columns (Slot / Start / End / Activity)."); return; }
+  headerRow.removeChild(headerRow.lastElementChild);
+  Array.from(tbody.children).forEach(tr=>{ if (tr.children.length >= colCount) tr.removeChild(tr.lastElementChild); });
+  Array.from(headerRow.children).forEach((th,idx)=>th.dataset.colIndex = idx);
+  Array.from(tbody.children).forEach((tr,rIdx)=>Array.from(tr.children).forEach((td,cIdx)=>{ td.dataset.colIndex = cIdx; const meta = getColMeta(cIdx); td.className = meta.className; td.dataset.placeholder = cIdx===0?String(rIdx+1):meta.placeholder; if (cIdx===1||cIdx===2){ td.removeEventListener('click', onTimeCellClick); td.addEventListener('click', onTimeCellClick); } }));
+  saveTable();
+}
+
+/* =========================
+   Dropdown & toolbar event handling
+   ========================= */
+function closeAllMenus(){ document.querySelectorAll('.dropdown-menu').forEach(m=>m.classList.remove('open')); }
+document.getElementById('toolbar').addEventListener('click', (e)=>{
+  const btn = e.target.closest('[data-menu-button]');
+  const menuItem = e.target.closest('.dropdown-item');
+  if (btn){
+    e.stopPropagation();
+    const key = btn.dataset.menuButton;
+    const panel = document.querySelector(`.dropdown-menu[data-menu-panel="${key}"]`);
+    if (!panel) return;
+    const open = panel.classList.contains('open');
+    closeAllMenus();
+    if (!open) panel.classList.add('open');
+    return;
+  }
+  if (menuItem){
+    e.stopPropagation();
+    const action = menuItem.dataset.action;
+    const count = parseInt(menuItem.dataset.count||"0",10);
+    if (action === "add-rows") { for(let i=0;i<count;i++) addRow(true); }
+    else if (action === "delete-rows") { for(let i=0;i<count;i++) deleteRow(); }
+    else if (action === "add-cols") { for(let i=0;i<count;i++) addColumn(); }
+    else if (action === "delete-cols") { for(let i=0;i<count;i++) deleteColumn(); }
+    else if (action === "add-rows-custom"){ const n = parseInt(prompt("How many rows to add?","3")||"0",10); if (n>0) for(let i=0;i<n;i++) addRow(true); }
+    else if (action === "delete-rows-custom"){ const n = parseInt(prompt("How many rows to delete?","1")||"0",10); if (n>0) for(let i=0;i<n;i++) deleteRow(); }
+    else if (action === "add-cols-custom"){ const n = parseInt(prompt("How many columns to add?","1")||"0",10); if (n>0) for(let i=0;i<n;i++) addColumn(); }
+    else if (action === "delete-cols-custom"){ const headerRow = document.getElementById("headerRow"); const maxDel = headerRow.children.length - 4; if (maxDel<=0) alert("No custom columns to delete."); else { const n = parseInt(prompt(`How many columns to delete? (max ${maxDel})`,"1")||"0",10); if (n>0) for(let i=0;i<Math.min(n,maxDel);i++) deleteColumn(); } }
+    closeAllMenus();
+  }
+});
+document.addEventListener('click', (e)=>{ if (!e.target.closest('#toolbar')) closeAllMenus(); });
+
+/* Clear all (per-week) */
+document.getElementById('clearAllBtn').addEventListener('click', ()=>{
+  if (!confirm("Clear all saved data for the entire week?")) return;
+  DAYS.forEach(d => localStorage.removeItem(storageKeyForDay(d)));
+  // reload current day
+  loadForDay(currentDay);
+});
+
+/* =========================
+   Gap panel behavior (Design 2)
+   ========================= */
+const gapPanel = document.getElementById('gapPanel');
+const gapBtn = document.getElementById('gapBtn');
+const gapLabel = document.getElementById('gapLabel');
+const gapCustomInput = document.getElementById('gapCustomInput');
+const gapApplyBtn = document.getElementById('gapApplyBtn');
+
+document.querySelectorAll('#gapPanel .btn[data-gap]').forEach(b => {
+  b.addEventListener('click', (e) => {
+    const val = parseInt(b.dataset.gap,10);
+    if (!isNaN(val)) {
+      gapCustomInput.value = val;
+      applyGap(Number(val));
+    }
+  });
+});
+
+gapApplyBtn.addEventListener('click', ()=> {
+  const v = Math.max(0, Math.round(Number(gapCustomInput.value) || 0));
+  applyGap(v);
+});
+
+function applyGap(minutes){
+  if (!currentDay) {
+    localStorage.setItem(`${BASE_KEY}_active_gap`, String(minutes));
+  } else {
+    setGapForDay(currentDay, minutes, true);
+  }
+  // close the gap panel
+  closeAllMenus();
+}
+
+/* Close gap panel when user clicks away handled by global click listener above */
+
+/* =========================
+   Time popup handling (compact)
+   ========================= */
+const timePopup = document.getElementById("timePopup");
+const hourSelect = document.getElementById("hourSelect");
+const minuteSelect = document.getElementById("minuteSelect");
+const periodSelect = document.getElementById("periodSelect");
+const applyTimeBtn = document.getElementById("applyTimeBtn");
+const cancelTimeBtn = document.getElementById("cancelTimeBtn");
+let activeTimeCell = null;
+
+/* populate selectors */
+(function initTimeSelectors(){
+  for (let h=1; h<=12; h++){ const opt = document.createElement('option'); opt.value=h; opt.textContent=h; hourSelect.appendChild(opt); }
+  for (let m=0; m<60; m+=5){ const opt = document.createElement('option'); opt.value=String(m).padStart(2,'0'); opt.textContent=String(m).padStart(2,'0'); minuteSelect.appendChild(opt); }
+})();
+
+function onTimeCellClick(e){
+  const td = e.currentTarget || e.target.closest('td');
+  if (!td) return;
+  openTimePopupForCell(td);
+}
+
+function openTimePopupForCell(td){
+  activeTimeCell = td;
+  const text = (td.textContent || "").trim();
+  const parsedMin = parseTimeToMinutes(text);
+  let hour = 6, minute = 0, period = "AM";
+  if (parsedMin != null){
+    const tStr = minutesToTimeString(parsedMin);
+    const parts = tStr.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/);
+    if (parts){ hour = parseInt(parts[1],10); minute = parseInt(parts[2],10); period = parts[3]; }
+  }
+  hourSelect.value = hour; minuteSelect.value = String(minute).padStart(2,'0'); periodSelect.value = period;
+  const rect = td.getBoundingClientRect();
+  const popupHeight = 120; const popupWidth = 220;
+  let top = rect.bottom + window.scrollY + 6;
+  if (top + popupHeight > window.scrollY + window.innerHeight) top = rect.top + window.scrollY - popupHeight - 6;
+  let left = rect.left + window.scrollX;
+  if (left + popupWidth > window.scrollX + window.innerWidth - 8) left = window.scrollX + window.innerWidth - popupWidth - 8;
+  timePopup.style.top = `${top}px`; timePopup.style.left = `${left}px`; timePopup.style.display = 'block'; timePopup.setAttribute('aria-hidden','false');
+}
+function closeTimePopup(){ timePopup.style.display = 'none'; timePopup.setAttribute('aria-hidden','true'); activeTimeCell = null; }
+
+applyTimeBtn.addEventListener('click', ()=>{
+  if (!activeTimeCell) return closeTimePopup();
+  const h = parseInt(hourSelect.value,10);
+  const m = parseInt(minuteSelect.value,10);
+  const p = periodSelect.value;
+  activeTimeCell.textContent = `${h}:${String(m).padStart(2,'0')} ${p}`;
+  saveTable();
+  closeTimePopup();
+});
+cancelTimeBtn.addEventListener('click', ()=> closeTimePopup());
+
+document.addEventListener('click', (e) => {
+  if (timePopup.style.display === 'block') {
+    if (!timePopup.contains(e.target) && !e.target.classList.contains('time-col')) closeTimePopup();
+  }
+});
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeTimePopup(); closeAllMenus(); } });
+
+/* Delegate clicks for time cells (works for dynamic cells) */
+document.getElementById('scheduleBody').addEventListener('click', (e) => {
+  const td = e.target.closest('td');
+  if (!td) return;
+  const colIndex = parseInt(td.dataset.colIndex || "-1", 10);
+  if (colIndex === 1 || colIndex === 2) { e.stopPropagation(); openTimePopupForCell(td); }
+});
+
+/* Auto-save on edits */
+document.getElementById('scheduleTable').addEventListener('input', (e) => {
+  const tag = e.target.tagName;
+  if (tag === "TD" || tag === "TH") saveTable();
+});
+
+/* =========================
+   Week tabs, init & boot
+   ========================= */
+function buildTabs(){
+  const container = document.getElementById('tabsContainer');
+  container.innerHTML = '';
+  DAYS.forEach(day => {
+    const el = document.createElement('div');
+    el.className = 'tab';
+    el.textContent = day;
+    el.dataset.day = day;
+    el.addEventListener('click', ()=>{
+      if (day === currentDay) return;
+      if (currentDay) saveForDay(currentDay, captureTableToData());
+      setActiveTab(day);
+      loadForDay(day);
+    });
+    container.appendChild(el);
+  });
+}
+function setActiveTab(day){
+  currentDay = day;
+  document.querySelectorAll('.tab').forEach(t => t.dataset.day === day ? t.classList.add('active') : t.classList.remove('active'));
+  const subtitle = document.querySelector('.subtitle'); if (subtitle) subtitle.textContent = `Editing: ${day} — Click start/end to edit time • Auto-save per day`;
+  // read gap from storage and show on gap button
+  const dayGap = readGapForDay(day);
+  document.getElementById("gapLabel").textContent = `Gap: ${dayGap} min`;
+  gapCustomInput.value = dayGap;
+}
+
+/* Pick initial day (Mon..Sun) from system date */
+function pickInitialDay(){
+  const today = new Date();
+  const idx = today.getDay(); // 0 Sun .. 6 Sat
+  const mappingIndex = (idx + 6) % 7;
+  return DAYS[mappingIndex];
+}
+
+/* INIT */
+function initApp(){
+  buildTabs();
+  const initial = pickInitialDay();
+  setActiveTab(initial);
+  loadForDay(initial);
+  // attach default gap if none (ensure UI shows something)
+  const persisted = Number(localStorage.getItem(`${BASE_KEY}_active_gap`));
+  if (!Number.isFinite(persisted)) localStorage.setItem(`${BASE_KEY}_active_gap`, "5");
+  // wire gap menu buttons inside panel to also close panel after click
+  document.querySelectorAll('#gapPanel .btn[data-gap]').forEach(b => b.addEventListener('click', ()=> closeAllMenus()));
+}
+initApp();
+
+/* Expose some helpers for console/testing */
+window.addRow = addRow; window.deleteRow = deleteRow;
+window.addColumn = addColumn; window.deleteColumn = deleteColumn;
+window.saveForCurrentDay = ()=>saveForDay(currentDay,captureTableToData());
+</script>
+</body>
+</html>
