@@ -160,7 +160,37 @@
         <div class="tabs" id="tabsContainer" aria-label="Week tabs"></div>
       </div>
 
-      <div class="toolbar" id="toolbar">
+     
+
+        <!-- GAP chip (Design 2: Icon + value) -->
+        <div class="dropdown" style="margin-left:8px">
+          <button class="gap-chip" id="gapBtn" data-menu-button="gap-panel" aria-haspopup="true" aria-expanded="false">
+            <span class="clock">🕒</span>
+            <span id="gapLabel">Gap: 5 min</span>
+          </button>
+          <div class="dropdown-menu" data-menu-panel="gap-panel" id="gapPanel">
+            <div class="gap-panel" style="min-width:170px">
+              <div style="font-size:12px;color:var(--text-muted);">Break between periods (minutes)</div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <button class="btn" data-gap="1">1</button>
+                <button class="btn" data-gap="5">5</button>
+                <button class="btn" data-gap="10">10</button>
+                <button class="btn" data-gap="15">15</button>
+                <button class="btn" data-gap="30">30</button>
+              </div>
+              <div style="display:flex;gap:8px;margin-top:8px;align-items:center">
+                <input id="gapCustomInput" class="gap-num" type="number" min="0" step="1" value="5" aria-label="Custom gap minutes">
+                <button class="btn" id="gapApplyBtn">Apply</button>
+              </div>
+              <div style="font-size:11px;color:var(--text-muted);margin-top:6px">Change affects only rows added afterwards.</div>
+            </div>
+          </div>
+        </div>
+
+        <button class="btn btn-danger" id="clearAllBtn"><span class="icon">🧹</span> Clear All</button>
+      </div>
+    </div>
+   <div class="toolbar" id="toolbar">
         <div class="toolbar-group">
           <div class="toolbar-label">Rows</div>
 
@@ -211,35 +241,7 @@
             </div>
           </div>
         </div>
-
-        <!-- GAP chip (Design 2: Icon + value) -->
-        <div class="dropdown" style="margin-left:8px">
-          <button class="gap-chip" id="gapBtn" data-menu-button="gap-panel" aria-haspopup="true" aria-expanded="false">
-            <span class="clock">🕒</span>
-            <span id="gapLabel">Gap: 5 min</span>
-          </button>
-          <div class="dropdown-menu" data-menu-panel="gap-panel" id="gapPanel">
-            <div class="gap-panel" style="min-width:170px">
-              <div style="font-size:12px;color:var(--text-muted);">Break between periods (minutes)</div>
-              <div style="display:flex;gap:8px;flex-wrap:wrap">
-                <button class="btn" data-gap="1">1</button>
-                <button class="btn" data-gap="5">5</button>
-                <button class="btn" data-gap="10">10</button>
-                <button class="btn" data-gap="15">15</button>
-                <button class="btn" data-gap="30">30</button>
-              </div>
-              <div style="display:flex;gap:8px;margin-top:8px;align-items:center">
-                <input id="gapCustomInput" class="gap-num" type="number" min="0" step="1" value="5" aria-label="Custom gap minutes">
-                <button class="btn" id="gapApplyBtn">Apply</button>
-              </div>
-              <div style="font-size:11px;color:var(--text-muted);margin-top:6px">Change affects only rows added afterwards.</div>
-            </div>
-          </div>
-        </div>
-
-        <button class="btn btn-danger" id="clearAllBtn"><span class="icon">🧹</span> Clear All</button>
-      </div>
-    </div>
+  
 
     <div class="body-section">
       <div class="table-wrap">
@@ -768,4 +770,5 @@ window.saveForCurrentDay = ()=>saveForDay(currentDay,captureTableToData());
 </script>
 </body>
 </html>
+
 
