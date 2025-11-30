@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Weekly Timetable – Glass Edition Enhanced</title>
+<title>Weekly Timetable – Glass Edition Enhanced (Notifications)</title>
 <style>
   :root{
     --glass-bg: rgba(15,23,42,0.28);
@@ -51,6 +51,17 @@
   /* Dark theme fallback */
   [data-theme="dark"] {
     --glass-bg: rgba(15,23,42,0.28);
+    --text-main: #e5e7eb;
+    --text-muted: #9ca3af;
+    --card-bg-start: rgba(15,23,42,0.76);
+    --card-bg-end: rgba(15,23,42,0.92);
+    --control-bg: rgba(10,15,25,0.9);
+  }
+  [data-theme="light"] .gap-chip {
+  color: var(--text-main);
+  }
+  [data-theme="dark"] .gap-chip {
+  color: var(--text-main);
   }
 
   *{box-sizing:border-box;margin:0;padding:0}
@@ -91,6 +102,24 @@
     cursor:pointer; font-size:18px; transition: all .25s ease;
   }
 
+  /* notification bell */
+  .notif-toggle{
+    width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    border:1px solid var(--glass-border); background: radial-gradient(circle at 0 0, rgba(255,255,255,0.02), transparent 50%), var(--control-bg);
+    cursor:pointer; font-size:18px; transition: all .25s ease; margin-left:8px;
+    position:relative;
+  }
+  /* glow animation when enabled */
+  .notif-enabled {
+    box-shadow: 0 0 12px 2px rgba(56,189,248,0.18), 0 0 24px 6px rgba(56,189,248,0.06);
+    animation: pulseGlow 3s infinite;
+  }
+  @keyframes pulseGlow{
+    0%{ box-shadow:0 0 6px 0 rgba(56,189,248,0.12); transform:translateY(0) }
+    50%{ box-shadow:0 0 18px 6px rgba(56,189,248,0.16); transform:translateY(-1px) }
+    100%{ box-shadow:0 0 6px 0 rgba(56,189,248,0.12); transform:translateY(0) }
+  }
+
   /* line 1 group */
   .top-line{
     display:flex;align-items:center;justify-content:center;gap:18px;padding:10px 12px 0;
@@ -108,6 +137,11 @@
   .gap-chip{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;border:1px solid var(--glass-border);background:var(--control-bg);cursor:pointer;font-weight:700}
   .gap-chip .clock{font-size:15px}
   .clear-btn{margin-left:6px}
+
+  /* reminder panel (inside bell) */
+  .reminder-panel{padding:10px;min-width:220px}
+  .reminder-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .reminder-num{width:86px;padding:8px;border-radius:8px;border:1px solid var(--glass-border);background:var(--control-bg);color:var(--text-main);text-align:center;font-size:14px}
 
   /* line 2 group: control panel (rows/cols) */
   .control-panel{
@@ -171,7 +205,35 @@
           <h1>Weekly Timetable Builder <span class="badge">Glass</span></h1>
           <div class="subtitle" id="subtitleText">Click start/end to edit time • Auto-save per day</div>
         </div>
-        <button id="themeToggle" class="theme-toggle" aria-label="Toggle theme"><span id="themeIcon">☀️</span></button>
+
+        <div style="display:flex;align-items:center;gap:8px">
+          <!-- notification bell / reminder dropdown -->
+          <div class="dropdown" id="notifDropdownWrap">
+            <button id="notifToggle" class="notif-toggle" aria-pressed="false" title="Enable reminders">
+              <span id="notifIcon">🔕</span>
+            </button>
+            <div class="dropdown-menu" data-menu-panel="notif-panel" id="notifPanel" aria-hidden="true">
+              <div class="reminder-panel">
+                <div style="font-weight:700;color:var(--text-main);margin-bottom:8px">Remind before start</div>
+                <div class="reminder-row">
+                  <button class="btn" data-rem="1">1m</button>
+                  <button class="btn" data-rem="5">5m</button>
+                  <button class="btn" data-rem="10">10m</button>
+                  <button class="btn" data-rem="15">15m</button>
+                  <button class="btn" data-rem="30">30m</button>
+                </div>
+                <div style="display:flex;gap:8px;margin-top:8px;align-items:center">
+                  <input id="reminderCustomInput" class="reminder-num" type="number" min="0" step="1" value="5" aria-label="Custom reminder minutes">
+                  <button id="reminderApplyBtn" class="btn">Apply</button>
+                </div>
+                <div style="font-size:12px;color:var(--text-muted);margin-top:8px">Saved per-day if a day is active. Notifications require permission.</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- theme toggle -->
+          <button id="themeToggle" class="theme-toggle" aria-label="Toggle theme"><span id="themeIcon">☀️</span></button>
+        </div>
       </div>
 
       <!-- LINE 1: Week tabs | Clear All | Gap -->
@@ -301,6 +363,8 @@
 const DAYS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
 const BASE_KEY = "weekly_schedule_glass_v2";
 const THEME_KEY = "weekly_schedule_theme";
+const REM_KEY_PREFIX = `${BASE_KEY}_reminder`; // store per-day reminders
+const NOTIFIED_PREFIX = `${BASE_KEY}_notified`; // store fired notifications
 let currentDay = null;
 
 /* Column metadata */
@@ -380,6 +444,7 @@ document.getElementById('themeToggle').addEventListener('click', toggleTheme);
 function storageKeyForDay(day){ return `${BASE_KEY}_${day}`; }
 function saveForDay(day, data){ localStorage.setItem(storageKeyForDay(day), JSON.stringify(data)); }
 function loadFromDay(day){ const raw = localStorage.getItem(storageKeyForDay(day)); try { return raw ? JSON.parse(raw) : null; } catch(e){ return null; } }
+function reminderKeyForDay(day){ return `${REM_KEY_PREFIX}_${day}`; }
 
 /* capture table */
 function captureTableToData(){
@@ -388,7 +453,8 @@ function captureTableToData(){
   const headers = Array.from(headerRow.children).map(th => th.textContent || "");
   const rows = Array.from(tbody.children).map(tr => Array.from(tr.children).map(td => td.textContent || ""));
   const gap = readGapForDay(currentDay);
-  return { headers, rows, gapMinutes: gap };
+  const reminder = readReminderForDay(currentDay);
+  return { headers, rows, gapMinutes: gap, reminderMinutes: reminder };
 }
 
 /* save current */
@@ -405,11 +471,125 @@ function readGapForDay(day){
 }
 function setGapForDay(day, minutes, persistUI = true){
   minutes = Math.max(0, Math.round(Number(minutes) || 0));
-  const data = loadFromDay(day) || { headers:["Slot","Start Time","End Time","Activity"], rows:[], gapMinutes:minutes };
+  const data = loadFromDay(day) || { headers:["Slot","Start Time","End Time","Activity"], rows:[], gapMinutes:minutes, reminderMinutes: readReminderForDay(day) || 5 };
   data.gapMinutes = minutes;
   saveForDay(day, data);
   document.getElementById("gapLabel").textContent = `Gap: ${minutes} min`;
   if (persistUI) localStorage.setItem(`${BASE_KEY}_active_gap`, String(minutes));
+}
+
+/* =========================
+   Reminder per-day (for notifications) default 5
+   ========================= */
+function readReminderForDay(day){
+  const raw = localStorage.getItem(reminderKeyForDay(day));
+  if (raw !== null) {
+    const n = Number(raw);
+    if (!Number.isNaN(n) && Number.isFinite(n) && n >= 0) return Math.max(0, Math.round(n));
+  }
+  return 5;
+}
+function setReminderForDay(day, minutes, persistUI = true){
+  minutes = Math.max(0, Math.round(Number(minutes) || 0));
+  localStorage.setItem(reminderKeyForDay(day), String(minutes));
+  // update UI if active
+  if (day === currentDay) {
+    document.getElementById('reminderCustomInput').value = minutes;
+  }
+  if (persistUI) {
+    // nothing else needed; it's stored per-day
+  }
+}
+
+/* =========================
+   Notification permission & UI
+   ========================= */
+const notifToggleBtn = document.getElementById('notifToggle');
+const notifIcon = document.getElementById('notifIcon');
+const notifPanel = document.getElementById('notifPanel');
+
+// helper to get permission state
+function notificationPermissionState(){
+  if (!("Notification" in window)) return 'unsupported';
+  return Notification.permission; // 'granted' | 'denied' | 'default'
+}
+
+// update bell UI based on permission & enabled state
+function updateNotifUI(){
+  const perm = notificationPermissionState();
+  const enabled = (perm === 'granted') && isNotificationsEnabledGlobally();
+  // icon toggles between 🔔 (enabled) and 🔕 (disabled)
+  notifIcon.textContent = enabled ? '🔔' : '🔕';
+  notifToggleBtn.setAttribute('aria-pressed', String(enabled));
+  // add glow class when enabled
+  if (enabled) notifToggleBtn.classList.add('notif-enabled'); else notifToggleBtn.classList.remove('notif-enabled');
+}
+
+// global enable flag stored in localStorage (user preference)
+const NOTIF_GLOBAL_KEY = `${BASE_KEY}_notif_enabled`;
+function isNotificationsEnabledGlobally(){
+  return localStorage.getItem(NOTIF_GLOBAL_KEY) === '1';
+}
+function setNotificationsEnabledGlobally(val){
+  localStorage.setItem(NOTIF_GLOBAL_KEY, val ? '1' : '0');
+  updateNotifUI();
+}
+
+// request permission then enable if granted
+function requestNotificationPermissionAndEnable(){
+  if (!("Notification" in window)){
+    alert("This browser doesn't support notifications.");
+    return;
+  }
+  Notification.requestPermission().then(permission => {
+    if (permission === "granted"){
+      setNotificationsEnabledGlobally(true);
+      updateNotifUI();
+      // brief visual feedback
+      showToast("Notifications enabled");
+    } else if (permission === "denied"){
+      setNotificationsEnabledGlobally(false);
+      updateNotifUI();
+      alert("Notifications blocked. To enable, adjust site permissions in your browser.");
+    } else {
+      // default (user dismissed)
+      setNotificationsEnabledGlobally(false);
+      updateNotifUI();
+    }
+  });
+}
+
+// toggle button click: if permission granted toggle preference; else request permission
+notifToggleBtn.addEventListener('click', (e)=>{
+  const perm = notificationPermissionState();
+  if (perm === 'granted'){
+    const enabledNow = isNotificationsEnabledGlobally();
+    setNotificationsEnabledGlobally(!enabledNow);
+    if (!isNotificationsEnabledGlobally()) showToast("Reminders disabled");
+    else showToast("Reminders enabled");
+  } else {
+    // ask for permission
+    requestNotificationPermissionAndEnable();
+  }
+});
+
+// small ephemeral toast for feedback
+function showToast(msg){
+  const el = document.createElement('div');
+  el.textContent = msg;
+  el.style.position = 'fixed';
+  el.style.bottom = '18px';
+  el.style.left = '50%';
+  el.style.transform = 'translateX(-50%)';
+  el.style.padding = '10px 14px';
+  el.style.background = 'rgba(0,0,0,0.75)';
+  el.style.color = 'white';
+  el.style.borderRadius = '10px';
+  el.style.zIndex = 9999;
+  el.style.fontSize = '14px';
+  document.body.appendChild(el);
+  setTimeout(()=> el.style.opacity = '0', 2200);
+  setTimeout(()=> document.body.removeChild(el), 2600);
 }
 
 /* =========================
@@ -575,6 +755,16 @@ document.addEventListener('click', (e)=>{
     if (!wasOpen){ panel.classList.add('open'); btn.setAttribute('aria-expanded','true'); panel.setAttribute('aria-hidden','false'); }
     return;
   }
+  // handle notif dropdown specially (open/close)
+  const notifBtn = e.target.closest('#notifToggle');
+  if (notifBtn){
+    e.stopPropagation();
+    const panel = document.getElementById('notifPanel');
+    const wasOpen = panel.classList.contains('open');
+    closeAllMenus();
+    if (!wasOpen){ panel.classList.add('open'); panel.setAttribute('aria-hidden','false'); }
+    return;
+  }
   // if clicked inside a dropdown-menu, do nothing (let sub-click handlers run)
   if (e.target.closest('.dropdown-menu')) return;
   // else clicked outside -> close menus
@@ -590,6 +780,9 @@ document.addEventListener('keydown', (e)=>{ if (e.key === 'Escape') closeAllMenu
 document.getElementById('clearAllBtn').addEventListener('click', ()=>{
   if (!confirm("Clear all saved data for the entire week?")) return;
   DAYS.forEach(d => localStorage.removeItem(storageKeyForDay(d)));
+  // reset per-day reminders and notified markers too (optional)
+  DAYS.forEach(d => localStorage.removeItem(reminderKeyForDay(d)));
+  Object.keys(localStorage).forEach(k => { if (k.startsWith(NOTIFIED_PREFIX)) localStorage.removeItem(k); });
   // reload current day
   loadForDay(currentDay);
 });
@@ -623,6 +816,38 @@ function applyGap(minutes){
     gapLabel.textContent = `Gap: ${minutes} min`;
   } else {
     setGapForDay(currentDay, minutes, true);
+  }
+  closeAllMenus();
+}
+
+/* =========================
+   Reminder (bell) panel behavior
+   ========================= */
+const reminderApplyBtn = document.getElementById('reminderApplyBtn');
+const reminderCustomInput = document.getElementById('reminderCustomInput');
+
+document.querySelectorAll('#notifPanel .btn[data-rem]').forEach(b=>{
+  b.addEventListener('click', ()=>{
+    const val = parseInt(b.dataset.rem,10);
+    if (!isNaN(val)) {
+      reminderCustomInput.value = val;
+      applyReminder(val);
+    }
+  });
+});
+reminderApplyBtn.addEventListener('click', ()=>{
+  const v = Math.max(0, Math.round(Number(reminderCustomInput.value) || 0));
+  applyReminder(v);
+});
+function applyReminder(minutes){
+  minutes = Math.max(0, Math.round(Number(minutes) || 0));
+  if (!currentDay){
+    // store a 'global default' for reminders if needed
+    localStorage.setItem(`${BASE_KEY}_default_reminder`, String(minutes));
+    showToast(`Default reminder set: ${minutes} min`);
+  } else {
+    setReminderForDay(currentDay, minutes, true);
+    showToast(`Reminder for ${currentDay}: ${minutes} min`);
   }
   closeAllMenus();
 }
@@ -733,6 +958,12 @@ function setActiveTab(day){
   const dayGap = readGapForDay(day);
   document.getElementById("gapLabel").textContent = `Gap: ${dayGap} min`;
   gapCustomInput.value = dayGap;
+  // reminder UI update
+  const rem = readReminderForDay(day);
+  document.getElementById('reminderCustomInput').value = rem;
+  // reset notified markers for this day to allow future notifications as fresh (optional)
+  // (We keep global notified markers but they are date-aware)
+  updateNotifUI();
 }
 
 /* load/create default */
@@ -747,10 +978,12 @@ function loadForDay(day){
         ["2","6:50 AM","7:35 AM","Breakfast"],
         ["3","7:40 AM","8:25 AM","Study Block"]
       ],
-      gapMinutes: 5
+      gapMinutes: 5,
+      reminderMinutes: readReminderForDay(day)
     };
   } else {
     if (typeof data.gapMinutes !== "number") data.gapMinutes = data.gapMinutes ? Number(data.gapMinutes) : 5;
+    if (typeof data.reminderMinutes !== "number") data.reminderMinutes = readReminderForDay(day);
   }
   setGapForDay(day, data.gapMinutes, false);
   rebuildTable(data);
@@ -784,17 +1017,117 @@ document.querySelectorAll('.dropdown-menu .dropdown-item').forEach(item=>{
 });
 
 /* =========================
+   Notification scheduling & firing
+   ========================= */
+
+/*
+  Strategy:
+  - Periodically (every 20s) scan currentDay table rows.
+  - For each row, parse Start Time (col index 1). Compute minutes since midnight.
+  - Compute target = startMinutes - reminderMinutes.
+  - If current local time minutes equals target (within check window) and we haven't already notified for that row+startMinutes+date, then:
+      - Fire a Notification (minimal body). Store a localStorage flag to prevent duplicates for that day+row+startStartMinutes.
+  - Notified key: NOTIFIED_PREFIX + "_" + YYYYMMDD + "_" + day + "_" + rowIndex + "_" + startMinutes
+*/
+
+function todayDateKey(){
+  const d = new Date();
+  const y = d.getFullYear(), m = String(d.getMonth()+1).padStart(2,'0'), day = String(d.getDate()).padStart(2,'0');
+  return `${y}${m}${day}`;
+}
+function notifiedStorageKey(day, rowIndex, startMinutes){
+  return `${NOTIFIED_PREFIX}_${todayDateKey()}_${day}_${rowIndex}_${startMinutes}`;
+}
+
+function sendInPageNotification(day, rowIndex, startText){
+  // minimal notification (user wanted only icon, but browsers typically show app name & small body)
+  if (!("Notification" in window)) return;
+  if (Notification.permission !== 'granted') return;
+  // create a short notification; body minimal
+  try {
+    const title = "Schedy";
+    const options = { body: `Upcoming at ${startText}`, tag: `${day}_${rowIndex}_${startText}`, renotify: false };
+    new Notification(title, options);
+  } catch(e){
+    console.warn("Notification failed:", e);
+  }
+}
+
+function checkAndFireReminders(){
+  try {
+    if (!currentDay) return;
+    // only proceed if user enabled globally and permission granted
+    if (!isNotificationsEnabledGlobally()) return;
+    if (Notification.permission !== 'granted') {
+      // if denied, reflect UI
+      updateNotifUI();
+      return;
+    }
+    const tbody = document.getElementById('scheduleBody');
+    const reminderMinutes = readReminderForDay(currentDay);
+    const now = new Date();
+    const nowMinutes = now.getHours()*60 + now.getMinutes();
+    // we run every ~20 seconds; allow match if nowMinutes equals target OR nowMinutes equals target and seconds near 0
+    Array.from(tbody.children).forEach((tr, rowIndex) => {
+      const startCell = tr.children[1];
+      if (!startCell) return;
+      const startText = (startCell.textContent || "").trim();
+      const startMin = parseTimeToMinutes(startText);
+      if (startMin == null) return;
+      // compute target minute
+      const target = startMin - reminderMinutes;
+      // handle wrap-around negative
+      const targetNormalized = ((target % (24*60)) + (24*60)) % (24*60);
+      // to allow seconds slipping, compute difference in minutes and seconds
+      // we'll consider a hit if absolute(nowTotalMinutes - targetNormalized) === 0 and seconds between 0..59
+      const nowTotalMinutes = nowMinutes;
+      if (nowTotalMinutes === targetNormalized) {
+        // check if already notified
+        const key = notifiedStorageKey(currentDay, rowIndex, startMin);
+        if (!localStorage.getItem(key)){
+          // fire notification
+          sendInPageNotification(currentDay, rowIndex, startText);
+          localStorage.setItem(key, String(Date.now()));
+        }
+      }
+    });
+  } catch(err){
+    console.error("Reminder check error:", err);
+  }
+}
+
+// run first after startup and then every 20 seconds
+let reminderInterval = null;
+function startReminderLoop(){
+  if (reminderInterval) clearInterval(reminderInterval);
+  reminderInterval = setInterval(checkAndFireReminders, 20000);
+  // also run immediately
+  setTimeout(checkAndFireReminders, 1200);
+}
+function stopReminderLoop(){
+  if (reminderInterval) clearInterval(reminderInterval);
+  reminderInterval = null;
+}
+
+/* =========================
    Init app
    ========================= */
 function initApp(){
   initTheme();
   // ensure default global gap exists
   if (!localStorage.getItem(`${BASE_KEY}_active_gap`)) localStorage.setItem(`${BASE_KEY}_active_gap`, "5");
+  // ensure default global reminder exists
+  if (!localStorage.getItem(`${BASE_KEY}_default_reminder`)) localStorage.setItem(`${BASE_KEY}_default_reminder`, "5");
   buildTabs();
   const initial = pickInitialDay();
   setActiveTab(initial);
   loadForDay(initial);
-  // close menus when clicking outside handled by document click listener above
+  // update notif UI according to stored preference & permission
+  updateNotifUI();
+  // begin reminder loop
+  startReminderLoop();
+  // add click handlers to close notif panel buttons to close after choice
+  document.querySelectorAll('#notifPanel .btn').forEach(b => b.addEventListener('click', ()=> closeAllMenus()));
 }
 initApp();
 
@@ -802,6 +1135,10 @@ initApp();
 window.addRow = addRow; window.deleteRow = deleteRow;
 window.addColumn = addColumn; window.deleteColumn = deleteColumn;
 window.saveForCurrentDay = ()=> saveForDay(currentDay, captureTableToData());
+
+// Make sure notif UI reflects permission changes if user changes browser settings live (best-effort)
+setInterval(updateNotifUI, 5000);
+
 </script>
 </body>
 </html>
