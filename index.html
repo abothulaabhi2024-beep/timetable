@@ -74,6 +74,15 @@
     color:var(--text-main);display:flex;align-items:center;justify-content:center;
     transition: background 0.3s ease, color 0.2s ease;
   }
+  /* Prevent notification popup from going off-screen */
+  .notify-menu {
+  right: 0 !important;
+  left: auto !important;
+  transform: translateX(-10px); /* pulls it slightly inward */
+  max-width: 240px;
+  overflow-wrap: break-word;
+  }
+
   .shell{width:100%;max-width:1400px}
   .card{
     width:100%;
@@ -212,7 +221,8 @@
             <button id="notifToggle" class="notif-toggle" aria-pressed="false" title="Enable reminders">
               <span id="notifIcon">🔕</span>
             </button>
-            <div class="dropdown-menu" data-menu-panel="notif-panel" id="notifPanel" aria-hidden="true">
+            <div class="dropdown-menu notify-menu" data-menu-panel="notif-panel" id="notifPanel" aria-hidden="true">
+
               <div class="reminder-panel">
                 <div style="font-weight:700;color:var(--text-main);margin-bottom:8px">Remind before start</div>
                 <div class="reminder-row">
